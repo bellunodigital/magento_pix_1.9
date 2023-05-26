@@ -20,7 +20,7 @@ We recommend that you have a testing environment to validate changes and updates
 
 Download the module and follow the steps below:
 
-[Belluno-Magento](https://github.com/tezusecommerce/Belluno_Magento1.9)
+[Belluno-Magento](https://github.com/bellunodigital/magento_pix_1.9)
 
 #### Installation using GitHub
 
