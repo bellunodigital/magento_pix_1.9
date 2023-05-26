@@ -1,0 +1,114 @@
+<?php
+$order = $this->getOrder();
+$payment = $order->getPayment();
+$method = $payment->getMethod();
+if($method == 'belluno_bankslippayment') : $digitableLine = $this->getDigitableLineBankSlip(); $url = $this->getUrlBankSlip(); ?>
+    <style>
+        .border-bankslip {
+            border: 1px solid gray;
+            padding: 10px;
+        }
+    </style>
+    <br>
+    <div class="border-bankslip">
+        <div class="digitable-line">
+            <h3><?= "Informações do boleto" ?></h3>
+            <h4>Linha digitável:</h4>
+            <textarea readonly rows="1" name="pixer" id="select-this"><?= $digitableLine ?></textarea>
+        </div>
+        <br>
+        <div class="btn-bankslip-download">
+            <input class="action primary btn-belluno-boleto" type="button" id="belluno_btn" onclick="window.open('<?= $url ?>');" value=" Baixe o seu boleto aqui " />
+        </div>
+    </div>
+
+<?php elseif($method == 'belluno_creditcardpayment') : $viewData = $this->getViewData(); ?>
+    <style>
+        .border-creditcard {
+            border: 1px solid gray;
+            padding: 10px;
+        }
+    </style>
+    <br>
+    <div class="border-creditcard">
+        <h3><?= "Informações do pagamento:" ?></h3>
+        <?php
+        $num = 0;
+        foreach ($viewData as $value) :
+            $num++;
+            $rest = $num % 2;
+            if ($rest == 0) : ?>
+                <h4><?= $value ?></h4>
+            <?php else : ?>
+                <h6><?= $value ?></h6>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </div>
+
+<?php elseif($method == 'belluno_pixpayment'): 
+    $pix = json_decode($payment->getAdditional_information()['pix'], true); 
+    $pix_expires_at = isset($pix['pix']['expires_at']) ? Mage::getModel('core/date')->timestamp($pix['pix']['expires_at']) : 0; 
+    $currentTimestamp = Mage::getModel('core/date')->timestamp(time());
+
+   if(isset($pix) && $currentTimestamp <= $pix_expires_at):
+    $code = Mage::helper("magento19")->decode($pix['pix']['base64_text']); ?>
+    <style>
+        .pix {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .copyCode {
+            width: 80%;
+            display: block;
+            margin: 0px 20px;
+        }
+        .copyCode input{
+            width: calc(100% - 140px);
+        }
+
+        .pix .copyCode .fieldcopycode {
+            max-width: 130px;
+            width: 100%;
+            padding: 5px;
+            float: right;
+            background: #000;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+    </style>
+    <div class="pix">
+        <div class="copyCode">
+            <input type="text" value="<?=$code;?>" id="pixTextBelluno">
+            <div class="fieldcopycode" onclick="copiarTextoPix(this)">Copiar</div>
+            <p class="info-expire"><?php echo date('d/m/Y H:i:s', $pix_expires_at); ?></p>
+        </div>
+        <div class="qrcode">
+            <img src="data:image/png;base64,<?=$pix['pix']['base64_image']?>">
+        </div>
+    </div>
+
+        
+    <script type="text/javascript">
+
+    function copiarTextoPix(e) {
+    var textoCopiado = document.getElementById("pixTextBelluno");
+    textoCopiado.select();
+    document.execCommand("copy");
+    document.getElementById("pixTextBelluno").blur();
+    setTimeout(function(){
+        e.style.backgroundColor = "#000";
+    }, 6000)
+    e.style.backgroundColor = "#117e31";
+    }
+
+    </script>
+
+    <?php endif; ?>
+<?php endif; ?>

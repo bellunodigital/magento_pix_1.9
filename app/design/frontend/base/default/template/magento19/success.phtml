@@ -1,0 +1,261 @@
+<?php
+$order = $this->getOrder();
+$payment = $order->getPayment();
+$total = $order->getGrandTotal();
+?>
+
+<style>
+    .button-belluno {
+        transition-duration: 0.4s;
+        background-color: white;
+        color: gray;
+        border: 1px solid gray;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+
+    .button-belluno:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    .label-belluno {
+        height: 30px;
+        font-size: 16px;
+        text-align: center;
+    }
+
+    .border-belluno {
+        border: 1px gray solid;
+    }
+
+    .row {
+        display: inline-block;
+        align-items: center;
+    }
+	
+</style>
+
+<?php if($payment->getMethod() == 'belluno_creditcardpayment'): ?>
+	<div class="page-title">
+    <h1><?php echo $this->__('Your order has been received.') ?></h1>
+</div>
+<?php echo $this->getMessagesBlock()->toHtml() ?>
+<h2 class="sub-title"><?php echo $this->__('Thank you for your purchase!') ?></h2>
+
+<?php if ($this->getOrderId()):?>
+<?php if ($this->getCanViewOrder()) :?>
+    <p><?php echo $this->__('Your order # is: %s.', sprintf('<a href="%s">%s</a>', $this->escapeHtml($this->getViewOrderUrl()), $this->escapeHtml($this->getOrderId()))) ?></p>
+<?php  else :?>
+    <p><?php echo $this->__('Your order # is: %s.', $this->escapeHtml($this->getOrderId())) ?></p>
+<?php endif ?>
+    <p><?php echo $this->__('You will receive an order confirmation email with details of your order and a link to track its progress.') ?></p>
+<?php if ($this->getCanViewOrder() && $this->getCanPrintOrder()) :?>
+    <p>
+        <?php echo $this->__('Click <a href="%s" onclick="this.target=\'_blank\'">here to print</a> a copy of your order confirmation.', $this->getPrintUrl()) ?>
+        <?php echo $this->getChildHtml() ?>
+    </p>
+<?php endif ?>
+<?php endif ?>
+
+<?php if ($this->getAgreementRefId()): ?>
+    <p><?php echo $this->__('Your billing agreement # is: %s.', sprintf('<a href="%s">%s</a>', $this->escapeHtml($this->getAgreementUrl()), $this->escapeHtml($this->getAgreementRefId())))?></p>
+<?php endif ?>
+
+<?php if ($profiles = $this->getRecurringProfiles()):?>
+<p><?php echo $this->__('Your recurring payment profiles:'); ?></p>
+<ul class="disc">
+<?php foreach($profiles as $profile):?>
+<?php $profileIdHtml = ($this->getCanViewProfiles() ? sprintf('<a href="%s">%s</a>', $this->escapeHtml($this->getProfileUrl($profile)), $this->escapeHtml($this->getObjectData($profile, 'reference_id'))) : $this->escapeHtml($this->getObjectData($profile, 'reference_id')));?>
+    <li><?php echo $this->__('Payment profile # %s: "%s".', $profileIdHtml, $this->escapeHtml($this->getObjectData($profile, 'schedule_description')))?></li>
+<?php endforeach ?>
+</ul>
+<?php endif ?>
+
+<div class="buttons-set">
+    <button type="button" class="button" title="<?php echo Mage::helper('core')->quoteEscape($this->__('Continue Shopping')) ?>" onclick="window.location='<?php echo $this->getUrl() ?>'"><span><span><?php echo $this->__('Continue Shopping') ?></span></span></button>
+</div>
+
+<?php 
+return; 
+endif;
+?>
+
+<?php if ($payment->getMethod() == 'belluno_bankslippayment') :
+    $digitableLine = $this->getDigitableLineBankSlip();
+    $url = $this->getUrlBankSlip();
+?>
+    <div class="actions-toolbar flex">
+        <div class="linhes">
+            <h4>Linha digitável</h4>
+            <div class="flex">
+                <fieldset class="border-belluno">
+                    <p class="label-belluno" id="text-digitableline"><?= $digitableLine ?></p>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="btn-bankslip-download">
+        <input class="action primary button-belluno row" type="button" id="belluno_btn" onclick="window.open('<?= $url ?>');" value=" Imprimir boleto " />
+        <button class="button-belluno row" id="button-copy" onclick="copyTextSucess()">Copiar</button>
+    </div>
+    <br>
+<?php endif; ?>
+
+
+<?php  
+if ($payment->getMethod() == 'belluno_pixpayment') : 
+   $pix = json_decode($payment->getAdditional_information()['pix'], true); 
+   $pix_expires_at = isset($pix['pix']['expires_at']) ? Mage::getModel('core/date')->timestamp($pix['pix']['expires_at']) : 0; 
+   $currentTimestamp = Mage::getModel('core/date')->timestamp(time());
+
+   if(isset($pix) && $currentTimestamp <= $pix_expires_at){
+    $code = Mage::helper("magento19")->decode($pix['pix']['base64_text']);
+   
+?> 
+
+<style>
+        .payment-pix.sucess-detalhes-pix {
+			width: 100%;
+            margin: auto;
+            display: table;
+			background-color: transparent;
+			border: solid 1px transparent;
+			padding: 40px 20px;
+			box-sizing: border-box;
+        }
+        .payment-pix .qrcode {
+			width: 100%;
+			display: table;
+			float: none;
+			margin: 25px 0;
+		}
+		.payment-pix .qrcode img {
+			width: 85%;
+			max-width: 260px;
+			margin: auto;
+			display: table;
+			padding: 10px;
+			box-sizing: border-box;
+			box-shadow: 0 0 10px rgb(0 0 0 / 12%);
+			border-radius: 5px;
+			background-color: #FFF;
+		}
+		.payment-pix .titulo-pagar-pix {
+			font-size: 22px;
+			color: #000;
+			text-align: center;
+			margin-top: 15px;
+			line-height: 1.2em;
+			text-transform: none;
+			font-weight: 600;
+		}
+        .payment-pix .copyCode {
+            width: 80%;
+            display: table;
+            margin: 30px auto;
+			max-width: 650px;
+        }
+        .payment-pix .copyCode input{
+            width: calc(100% - 140px);
+			height: 45px;
+			line-height: 45px;
+			font-size: 12px;
+			border: solid 1px #666;
+			border-radius: 3px;
+			padding: 0 20px;
+			box-sizing: border-box;
+        }
+		.payment-pix .copyCode input:focus{
+			background-color: #f8f8f8;
+			outline:none;
+			border: solid 1px #111;
+        }
+		.payment-pix .info-expire {
+			font-size: 11px;
+			color: #999;
+			margin-top: 25px;
+			text-align: center;
+		}
+        .payment-pix .copyCode .fieldcopycode {
+            max-width: 130px;
+            width: 100%;
+
+			height: 45px;
+			line-height: 45px;
+			font-size: 22px;
+			padding: 0 5px;
+            float: right;
+            background: #000;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+			text-align: center;
+        }
+        .payment-pix .copyCode .fieldcopycode:hover {
+            background: #111;
+        }
+		@media only screen and (max-width: 767px) {
+			.payment-pix .copyCode input{
+				width: calc(100% - 00px);
+			}
+			.payment-pix .titulo-pagar-pix {
+				font-size: 18px;
+			}
+			.payment-pix .copyCode {
+				width: 100%;
+			}
+			.payment-pix .copyCode .fieldcopycode {
+				max-width: 100%;
+				margin-top: 8px;
+				margin-bottom: 15px;
+			}
+			.payment-pix .qrcode img {
+				width: 100%;
+			}
+		}
+
+		.payment-pix .total {
+            margin: auto;
+            width: 100%;
+            max-width: 267px;
+            text-align: center;
+            padding: 5px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: 1px solid;
+            border-color: #0d9547;
+            border-radius: 3px;
+        }
+
+        .payment-pix .total .price{
+            color:#0d9547;
+            font-weight: 500;
+            font-size: 17px;
+        }
+        .payment-pix .total span {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0d9547;
+            margin-right: 2px;
+        }
+
+</style>
+    <div class="payment-pix sucess-detalhes-pix">
+		<div class="titulo-pagar-pix">Fazer Pagamento Pix/QR Code:</div>
+		<div class="qrcode">
+			<img src="data:image/png;base64,<?=$pix['pix']['base64_image']?>">
+		</div>
+		<div class="total">
+            <span>Valor:</span><?php echo Mage::helper('core')->currency($total);?>
+        </div>
+		<div class="copyCode">
+			<input type="text" value="<?=$code;?>" id="pixTextBelluno">
+			<div class="fieldcopycode" onclick="copiarTextoPix(this)">Copiar</div>
+			<p class="info-expire">O QR Code expira em: <?php echo date('d/m/Y H:i:s', $pix_expires_at); ?>.<br/>
+			Você também pode fazer o pagamento na seção Minha Conta > Pedidos</p>
+		</div>
+	</div>
+<?php } endif; ?>
